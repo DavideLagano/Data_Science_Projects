@@ -1,0 +1,61 @@
+name: assignment 1
+variables:
+    fixed_setup_cost: 250000
+    upgrade_fixed_cost: 50000
+    purchases_board_cost: 5
+    cost_board: 2
+    R&S: 25000
+    profit_of_100k_boards: purchases_board_cost*100000
+    profit_of_200k_boards: purchases_board_cost*200000
+    cost_of_200k_boards: cost_board*200000
+    cost_of_100k_boards: cost_board*100000
+    primo_payoff: profit_of_200k_boards-fixed_setup_cost-cost_of_200k_boards
+    secondo_payoff: profit_of_100k_boards-fixed_setup_cost-cost_of_200k_boards
+    terzo_payoff: profit_of_200k_boards-fixed_setup_cost-fixed_setup_cost-cost_of_200k_boards
+    quarto_payoff: profit_of_100k_boards-fixed_setup_cost-cost_of_100k_boards
+    quinto_payoff: profit_of_200k_boards-R&S-fixed_setup_cost-upgrade_fixed_cost-cost_of_200k_boards
+    sesto_payoff: profit_of_100k_boards-R&S-fixed_setup_cost-cost_of_100k_boards
+    settimo_payoff: profit_of_200k_boards-fixed_setup_cost-fixed_setup_cost-cost_of_200k_boards-R&S
+    ottavo_payoff: profit_of_100k_boards-fixed_setup_cost-cost_of_100k_boards-R&S
+
+type: decision
+Not invest in R&S:
+    type: decision
+    200000 boards immediately:
+        type: chance
+        sell 200000 boards:
+            p: 0.5
+            payoff: primo_payoff
+        sell 100000 boards:
+            p: 0.5
+            payoff: secondo_payoff
+    100000 boards immediately+100000 late:
+        type: chance
+        sell 200000 boards:
+            p: 0.5
+            payoff: terzo_payoff
+        sell 100000 boards:
+            p: 0.5
+            payoff: quarto_payoff
+implementing R&S:
+    type: decision
+    100000 boards immediately+100000 late:
+        type: chance
+        R&s ready:
+            p: 0.4
+            type: chance 
+            sell 200000 boards:
+                p: 0.5
+                payoff: quinto_payoff
+            sell 100000 boards:
+                p: 0.5
+                payoff: sesto_payoff
+        R&s not ready:
+            p: 0.6
+            type: chance 
+            sell 200000 boards:
+                p: 0.5
+                payoff: settimo_payoff
+            sell 100000 boards:
+                p: 0.5
+                payoff: ottavo_payoff

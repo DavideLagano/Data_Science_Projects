@@ -1,0 +1,207 @@
+---
+title: 'Assignment 1: Printed circuits'
+author: "null"
+date: "18-03-2019"
+output: 
+  html_document:
+    code_download: yes
+    df_print: paged
+    highlight: textmate
+    theme: spacelab
+    toc: yes
+    toc_depth: 5
+  pdf_document: 
+    df_print: paged
+    highlight: tango 
+    toc: yes
+    toc_depth: 5
+  html_notebook:
+    df_print: paged
+    highlight: textmate
+    theme: spacelab
+    toc: yes
+    toc_depth: 5
+---
+
+```{r r_setup, include = FALSE}
+## initial settings
+knitr::opts_chunk$set(
+  comment = NA,
+  echo = TRUE,
+  error = TRUE,
+  cache = FALSE,
+  message = FALSE,
+  dpi = 200,
+  warning = FALSE
+)
+
+## width to use when printing tables etc.
+options(
+  width = 250,
+  scipen = 100,
+  max.print = 5000,
+  stringsAsFactors = FALSE
+)
+```
+
+<style>
+.table {
+  width: auto;
+}
+ul, ol {
+  padding-left: 18px;
+}
+pre, code, pre code {
+  overflow: auto;
+  white-space: pre;
+  word-wrap: normal;
+  background-color: #ffffff;
+}
+</style>
+
+## Introduction
+*MC Manufacturing* has contracted to provide *DISCO Electronics* with printed circuit ("PC") boards under
+the following terms: (1) 100,000 PC boards will be delivered to DISCO in one month, and (2) DISCO has an
+option to take delivery of an additional 100,000 boards in three months by giving Aba 30 days notice. DISCO
+will pay $5.00 for each board that it purchases. MC manufactures the PC boards using a batch process, and
+manufacturing costs are as follows: (1) there is a fixed setup cost of $250,000 for any manufacturing batch
+run, regardless of the size of the run, and (2) there is a marginal  manufacturing cost of $2.00 per board
+regardless of the size of the batch run. MC must decide whether to manufacture all 200,000 PC boards now or
+whether to only manufacture 100,000 now and manufacture the other 100,000 boards only if DISCO exercises its
+option to buy those boards. If MC manufactures 200,000 now and DISCO does not exercise its option, then the
+manufacturing cost of the extra 100,000 boards will be totally lost. MC believes there is a 50% chance DISCO
+will exercise its option to buy the additional 100,000 PC boards.
+
+## The decision tree
+
+```{r}
+library(yaml)
+library(radiant)
+library(radiant.model)
+tree = yaml.load_file(input = "C:/Users/david/Desktop/data_science_lezioni/decision models/Assignment 1/esercizio_1.yaml")
+result =dtree(yl = tree)
+summary(result, input = FALSE, output = TRUE)
+plot(result, final = TRUE)
+```
+In seguito, verrà esplicato il ragionamento alla base del primo albero decisionale:
+la prima decisione che dovrà prendere l'azienda MC Manufacturing riguarderà il fatto di comprare immediatamente 200000 schede, pagando una sola 'installazione fissa', con in rischio di avere un invenduto di 100000 schede, nel caso in cui DISCO non esercitasse l'opzione di compera del secondo lotto, o risparmiando i costi di una seconda installazione nel caso in cui DISCO esercitasse l'opzione.
+Il secondo ramo rappresenta la possibilità di produrre immediatamente 100000 schede, con l'opzione di poterne produrre altrettante in un secondo momento alla richiesta da parte di DISCO. Il lato negativo di questa scelta riguarda il fatto di dover pagare due volte l'installazione fissa in caso in cui DISCO esercitasse l'opzione, ma risparmiando un eventuale perdita dei costi di produzione di 100000 schede, nel caso DISCO non dovesse ordinare il secondo lotto.
+I due rami hanno la stessa probabilità di successo, quindi il 50%.
+In questo caso è stato posto come payoff il profitto netto.
+Nel punto successivo, tramite un approccio matematico, verrà valutato il percorso migliore.
+
+
+## Expected value
+-  Determine the preferred course of action for MC assuming it uses expected profit as its decision criterion.
+```{r}
+EV1 = (350000*0.5+-150000*0.5)
+EV1
+EV2 = (100000*0.5 + 0.5*50000)
+EV2
+```
+In questo caso, seguendo la via del profitto massimo, si è deciso di valutare il ramo migliore attraverso la comparazione del valore atteso fra i rami.
+Come si evince dal calcolo sopra indicato, il ramo con il valore atteso maggiore è quello che porta alla produzione immediata di 200000 schede. E' evidente, quindi, che a parità di probabilità di successo dei due rami, conviene risparmiare nel costo di installazione fissa 'rischiando' la perdita del costo di produzione di 100000 schede. 
+
+
+## Utility Function and Certainty Equivalent
+
+Assume that all the information still holds, except assume now that MC has an exponential utility function with a risk tolerance of $100,000.
+
+- Determine MC's preferred course of action.
+
+```{r}
+# risk tollerance
+r=100000
+utilityFunctionExp <- function(X, R) {
+  res <- 1- exp(-X/R)
+  return(res)
+}
+u1 = utilityFunctionExp(350000,r)
+u1
+u2 = utilityFunctionExp(-150000,r)
+u2
+u3 = utilityFunctionExp(100000,r)
+u3
+u4 = utilityFunctionExp(50000,r)
+u4
+
+EU1 = (u1*0.5+u2*0.5)
+EU1
+EU2 = (u3*0.5+u4*0.5)
+EU2
+
+CertEquivalent = function(EU, R){
+  CE = -R*ln(1-EU)
+  return(CE)
+}
+CE1 = CertEquivalent(EU1, r)
+CE1
+CE2 = CertEquivalent(EU2, r)
+CE2
+```
+
+In questo punto è stato richiesto di calcolare la funzione di utilità e l'equivalnte certo, al fine di determinare qual'è il percorso migliore che l'azienda MC Manifacturing dovrebbe percorrere.
+Il primo calcolo da fare riguarda la funzione di utilità, che stabilisce le preferenze di una persona tra le scommesse all'interno del paniere, conferendo ad ogni scelta un indice di soddisfazione di essa.
+La funzione di utilità ci servirà per calcolare l'utilità prevista, che a sua volta comparirà nella formula dell'equivalente di certezza, cioè la somma minima che un soggetto dovrebbe ricevere al fine di poter accettare uno scambio con la propria 'scommessa' in condizioni di rischio.
+
+Formule:
+
+$u(x)=1-exp(-x/R)$
+
+$EU = p1*u1+p2*u2$
+
+$CE = -R*ln(1-EU)$
+
+Come si evince dai calcoli, abbiamo una funzione di utilità maggiore (0.9698026) nel caso in cui vengano prodotte subito tutte le schede e DISCO eserciti l'opzione di compera delle ulteriori 100000 schede, rispetto al resto dei rami (-3.481689), (0.6321206), (0.3934693).
+Possiamo quindi dire che il ramo superiore fornisce un'utilità maggiore.
+
+Nel caso in cui l'equivalente certo dovesse essere uguale al valore atteso, saremmo in una situazione di indifferenza al rischio.
+Nel caso in cui l'equivalente certo dovesse essere minore al valore atteso, saremmo in una situazione di avversione al rischio.
+Nel caso in cui l'equivalente certo dovesse essere maggiore al valore atteso, saremmo in una situazione di indifferenza al rischio.
+Siamo quindi in presenza di una situazione di avversione al rischio.
+
+
+
+## Modification of the process
+
+For the decision in the preceding point, MC Manufacturing has created a new option: it can conduct some research and development in an attempt to lower the fixed setup cost associated with manufacturing a batch of the PC boards. This research and development would not be completed in time to influence the setup cost for the initial batch that DISCO has ordered, but would be completed before the second batch would have to be manufactured. The research and development will cost $25,000, and there is a 0.4 probability that it will be successful. If it is successful, then the fixed setup cost per batch will be reduced by $200,000 to $50,000. If the research and development is not successful, then there will be no reduction in the setup cost. There will be no other benefits from the research and development besides the potential reduction in setup cost for the DISCO reorder.
+
+- Using expected profit as the decision criterion, determine whether MC should undertake the research and development.
+```{r}
+tree2 = yaml.load_file(input = "C:/Users/david/Desktop/data_science_lezioni/decision models/Assignment 1/esercizio_4.yaml")
+result2 =dtree(yl = tree2)
+summary(result2, input = FALSE, output = TRUE)
+plot(result2, final = TRUE)
+```
+Data la nuova condizione (vedi nel testo sopracitato) si è deciso di partire da un nodo decisionale nella quale si è posti subito davanti ad un bivio: implementare o meno la fase del nuovo processo di ricerca e sviluppo. Oltre a questa modifica iniziale, si è deciso di mantenere immutato l'albero del punto precedente (rappresentato dal ramo superiore di quest'albero), aggiungendo un ramo che rappresentasse la nuova opzione.
+Nella nuova opzione, quindi, si procede nel seguente modo: dal momento in cui non si può sapere se effettivamente la fase di ricerca e sviluppo avrà successo e richiede tempo per essere completata, si fa partire subito la ricerca pagandone i relativi costi. Subito dopo si producono le prime 100000 schede.
+A questo punto bisogna semplicemente aspettare l'esito della ricerca. Nel caso fosse positivo (con una probabilità del 40%) e DISCO dovesse ordinare il secondo lotto di schede, si risparmierebbe nel costo fisso di installazione. Se invece DISCO dovesse decidere di non ordinare il secondo lotto di schede, non ci sarebbero altri costi, avendo 'sprecato' l'investimento in ricerca e sviluppo.
+Nel caso contrario (con una probabilità del 60%), cioè se la fase di ricerca e sviluppo non fosse completa e DISCO dovesse ordinare il secondo lotto di schede, non ci sarebbe alcun risparmio nel costo fisso di installazione. Nel caso in cui DISCO dovesse decidere di non ordinare il secondo lotto di schede, non ci sarebbero altri costi. In entrambi i casi, l'investimento in ricerca e sviluppo sarà stato inutile.
+Nel ramo 'implementing R&S' è stata volutamente omessa l'opzione di produrre immediatamente 200000 schede, in quanto sarebbe completamente senza senso pagare la ricerca e sviluppo se la si può sfruttare solo nella produzione del secondo lotto.
+Come si evince dall'albero, il valore atteso del ramo rappresentante l'implementazione della fase di ricerca e sviluppo è ancora inferiore rispetto a al ramo rappresentante l'opzione di non implementarla. Di conseguenza, si preferirà procedere verso il primo ramo, con lo stesso risultato dell'albero precedente, quindi non investire in ricerca e sviluppo producendo immediatamente 200000 schede.
+
+
+
+## Value of Information
+
+Using expected profit as the decision criteria, determine the value of learning for certain whether the research and development will be successful before a decision has to be made about whether to initially manufacture 100,000 or 200,000 PC boards.
+
+```{r}
+library(yaml)
+library(radiant)
+library(radiant.model)
+tree3 = yaml.load_file(input = "C:/Users/david/Desktop/data_science_lezioni/decision models/Assignment 1/esercizio_5.yaml")
+result3 =dtree(yl = tree3)
+summary(result3, input = FALSE, output = TRUE)
+plot(result3, final = TRUE)
+
+perfect_information = 120000-100000
+perfect_information
+```
+L'obiettivo ultimo di questo problema è trovare il prezzo dell'informazione perfetta, cioè fino a quanto si è disposti a spendere al fine di ottenere un'informazione perfetta in ottica decisionale.
+Il primo bivio di fronte al quale ci troviamo, riguarda il fatto che, dopo aver ottenuto l'informazione perfetta, la fase di ricerca e sviluppo sarà pronta subito dopo la produzione delle prime 100000 schede, o no.
+Nel caso in cui la fase di ricerca e sviluppo dovesse essere pronta, ci si ritroverebbe davanti ad un'ulteriore decisione, investire o meno in ricerca e sviluppo. Nel caso in cui si decidesse di non investire, la spiegazione del ramo equivarrebbe al ramo 'not invest in R&S' del punto precedente.
+Nel caso in cui, invece, si decidesse di investire in ricerca e sviluppo, avendo la certezza che essa sarà pronta in tempo e DISCO dovesse acquistare il secondo lotto, le altre 100000 schede verrebbero prodotte con un costo di installazione inferiore. Nel caso in cui DISCO non le dovesse comprare, l'investimento sarebbe inutile.
+Nel caso in cui, invece, la fase di ricerca e sviluppo non dovesse essere pronta, vedi nuovamente la spiegazione del ramo 'not invest in R&S' del punto precedente.
+Nonostante nell'albero precedente, all'interno del ramo 'implementing R&S' si abbia voluto omettere volontariamente l'opzione di produrre immediatamente 200000 schede, in questo caso è stato volutamente implementato all'interno dell'albero il ramo 'not investing in R&S', proprio per poter dare all'albero tutte le possibilità di scelta.
+Come si evince dall'albero, il valore atteso finale è di 120000. Di conseguenza, il valore della perfetta informazione risulta uguale a 120000-100000=20000, cioè il prezzo massimo che l'azienda MC Manufacturing sarebbe disposta a spendere per sapere se la fase di ricerca e sviluppo sarà pronta entro la seconda produzione del lotto è pari a 20000$.
